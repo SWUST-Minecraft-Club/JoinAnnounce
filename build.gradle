@@ -1,0 +1,16 @@
+plugins { id 'xyz.jpenilla.run-paper' version '3.1.0' }
+apply from: './gradle/plugin.gradle'
+// JoinAnnounce：玩家进服公告（本人公告 + 首次进服文案 + 进出服广播 + 主菜单「服务器公告」入口）。
+// 主菜单入口只是附加入口：compileOnly 依赖 MainMenu 工程，运行期由服务端提供（软依赖）。
+
+dependencies {
+    compileOnly files(rootProject.file('libs/MainMenu-mc26.3-plugin-1.10.1-beta.1.jar'))
+
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

@@ -1,0 +1,61 @@
+# JoinAnnounce ChangeLog（测试版）
+
+版本命名与产物见 `./docs/dev/版本与产物规范.md`。
+格式：`[新版本] 时间` 或 `[上一版本 -> 新版本] 时间`，下面列本次改动（新增 / 修复 / 调整）。
+
+---
+
+[Beta_0_1_0] 2026.10.24 21:48:29
+1.新增：进服公告 —— 玩家进服后按 `announce.delay-ticks` 延迟发送多行 MiniMessage 公告（默认 1 秒）；
+   支持 `<player>` / `<online>` / `<max>` / `<world>` 占位符，单行解析失败按纯文本兜底
+2.新增：首次进服专属文案（`first-join`，接在普通公告后面，只对第一次进服的玩家生效）
+3.新增：可选标题 / 副标题与提示音（`announce.title` / `announce.sound`，默认关闭；音效键无效时告警并跳过）
+4.新增：进出服全服广播（`broadcast.join` / `broadcast.quit`），替换原版 join / quit 消息，
+   `enabled: false` 时完全不干预原版消息
+5.新增：主菜单「服务器公告」入口（`menu`，软依赖 MainMenu）—— 点击关闭菜单并重播公告，
+   悬停显示当前在线人数，排序值可配；MainMenu 缺失时自动跳过，不影响进服公告
+6.新增：`/joinannounce reload|preview`（权限 `joinannounce.admin`，默认 OP）
+7.适配：Folia 26.3 —— `paper-plugin.yml` 声明 `folia-supported: true`；延迟公告走 `player.getScheduler()`，
+   广播改写事件消息而不跨区域遍历在线玩家，配置快照用 volatile 整体替换
+
+[Beta_0_1_0 -> Beta_0_2_0] 2026.10.24 22:13:16
+1.新增：进服公告支持 dialog 弹窗 —— 用 26.3 运行时 `Dialog.create(...)` 构造 notice 对话框
+   （标题 + 正文 + 「知道了」按钮），`player.showDialog(...)` 只发给该玩家；不需要 bootstrapper / 数据包 / 注册表项
+2.新增：`announce.display` 显示方式 `dialog` / `chat` / `both`（默认 `dialog`：只弹窗，不再刷聊天栏）
+3.新增：`announce.dialog` 配置（标题 / 正文宽度 / 按钮文字 / 是否允许 ESC 关闭）
+4.调整：主菜单「服务器公告」入口按 `announce.display` 显示；`/joinannounce preview` 玩家执行时同时预览聊天栏与弹窗
+5.调整：弹窗关闭按钮复用同一个点击动作实例（无限次使用），避免每次进服注册一条新的长效回调
+
+[Beta_0_2_0 -> Beta_0_2_1] 2026.10.25 12:06:08
+1.调整：进出服广播默认关闭 —— 进服公告只在 dialog 弹窗里显示，插件默认不往聊天栏发任何消息
+2.调整：`/joinannounce preview` 改为严格按 `announce.display` 预览（默认只弹窗，不再强制发聊天栏文本）
+3.调整：`config-simple.yml` 说明同步（缺省值里广播已是关闭）
+
+[Beta_0_2_1 -> Beta_0_2_2] 2026.10.26 12:47:20
+1.调整：`config-simple.yml` 恢复为 SWUST MINECRAFT 社团公告文案（星空社、社团配色、长期生存服说明），
+   保持无徽章的纯 dialog 弹窗形式
+
+[Beta_0_2_2 -> Beta_0_3_0] 2026.10.26 20:53:44
+1.新增：`announce.once-per-day` —— 每位玩家每天只在当天第一次进服时弹公告：
+   跨天在线的玩家不打断，退出后在新的一天再次进服时才弹；记录只存在内存里，服务器重启即重置；
+   「一天」按 `announce.day-zone-offset-hours` 划分（默认东 8 区）；`preview` 与主菜单入口不受限制
+2.调整：`config-simple.yml` 打开 `once-per-day: true`
+
+[Beta_0_3_0 -> Beta_0_3_1] 2026.10.26 21:13:22
+1.修复：`announce.once-per-day` 默认值改为 `true` —— 升级后旧 `config.yml` 里没有这个键时也按「每天一次」处理
+   （原先缺键回落到 `false`，表现为退出重进仍然弹公告）
+2.新增：启动日志打印当前公告模式（每位玩家每天首次进服 / 每次进服都弹）与时区
+3.新增：`DailyNoticeGate` 单元测试（首次当天可弹、同一天不重复、跨天再弹、玩家互不影响）
+
+[Beta_0_3_1 -> Beta_0_4_0] 2026.10.26 22:39:17
+1.新增：dialog 第二个按钮「查看完整更新日志」（`announce.dialog.link.text` / `url` / `width`）——
+   点击用浏览器打开外部链接（静态 `ClickEvent.openUrl`，不注册点击回调）；`url` 留空则不显示
+2.新增：`announce.dialog.button-width` / `link-width` ——两个按钮用 multiAction（2 列）并排，
+   主按钮（开始冒险）按宽度占比更大
+3.调整：`config-simple.yml` 打开更新日志按钮（默认指向仓库 Releases 页）
+
+[Beta_0_4_0 -> Beta_0_4_1] 2026.10.26 23:12:31
+1.修复：两个按钮改为 `confirmation` 类型渲染，固定在弹窗底部页脚 —— `multiAction` 的按钮在可滚动正文里，
+   正文长时会跟着内容滚走；现在「查看完整更新日志」（左）+「开始冒险」（右，更宽）都钉在底部
+2.说明：链接按钮放在 no 按钮之前（yes），主按钮作为 no —— 对话框关闭时会执行 no 按钮的动作，
+   把空回调的主按钮放 no 可避免按 ESC 关闭时误开浏览器
